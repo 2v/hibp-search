@@ -16,7 +16,7 @@ typedef struct kp {     /* key pair */
 
 typedef struct tnode {
     int n;                   /* the number of keys currently stored in this node */
-    struct kp *keys;         /* pointer to data containing the keys, should be initialized with malloc */
+    kp *keys;         /* pointer to data containing the keys, should be initialized with malloc */
     char **children;         /* pointer to data containing pointers to children */
                              /* these will be paths to files containing particular nodes, which will have to be opened
                              /* and loaded into memory and cast to tnode type */
@@ -111,7 +111,10 @@ tnode *read_tnode(char *filename) {
     return node;
 }
 
-void load_data_into_node(tnode *node, char *line, char *delimiter, int key_pos) {
+/*  loads a key pair into a node at the given key_pos. 
+    uses strtok to break up the given line into two tokens
+    seperated by the given delimiter */
+void load_key_into_node(tnode *node, char *line, char *delimiter, int key_pos) {
     /* tokenizing the line into key and occurence pair */
     char *key = strtok(line, delimiter);
     char *occurence_string = strtok(NULL, delimiter); 
@@ -146,7 +149,7 @@ tnode *build_b_tree(char *filename) {
             for(int k = 0; k < node_size; k++) {
 
                 if ((read = getline(&line, &len, file)) != -1) {
-                    load_data_into_node(cc, line, ":", k);
+                    load_key_into_node(cc, line, ":", k);
                 } else {
                     strcpy(cc->keys[k].key, inf_key);
                     cc->keys[k].occurences = 0;
@@ -163,7 +166,7 @@ tnode *build_b_tree(char *filename) {
             free(node_filename);
 
             if ((read = getline(&line, &len, file)) != -1) {
-                load_data_into_node(c, line, ":", j);
+                load_key_into_node(c, line, ":", j);
             } else {
                 strcpy(c->keys[j].key, inf_key);
                 c->keys[j].occurences = 0;
@@ -180,7 +183,7 @@ tnode *build_b_tree(char *filename) {
         free(node_filename);
 
         if ((read = getline(&line, &len, file)) != -1) {
-            load_data_into_node(root, line, ":", i);
+            load_key_into_node(root, line, ":", i);
         } else {
             strcpy(root->keys[i].key, inf_key);
             root->keys[i].occurences = 0;
@@ -193,6 +196,31 @@ tnode *build_b_tree(char *filename) {
         free(line);
 
     return root;
+}
+
+kp *search_b_tree(tnode *x, char key[41]) {
+    /* set up empty kp */
+    kp *ret = malloc(sizeof(kp));
+
+    int i = 0;
+    while(i < x->n && strcmp(key, x->keys[i].key) > 0) {
+        i = i + 1;
+    }
+
+    if(i < x->n && strcmp(key, x->keys[i].key) == 0) {
+        strcpy(ret->key, x->keys[i].key);
+        ret->occurences = x->keys[i].occurences;
+        return ret;
+   } else if(x->leaf) {
+        strcpy(ret->key, "NOT FOUND");
+        ret->occurences = -1;
+        return ret;
+    } else {
+        tnode *child = read_tnode(x->children[i]);
+        free(x);
+        free(ret);
+        search_b_tree(child, key);
+    }
 }
 
 int main() {
@@ -224,10 +252,18 @@ int main() {
 
     free_tnode(new_node);
 
-    tnode *test_node = build_b_tree("pwned-passwords-test.txt");
+    // tnode *test_node = build_b_tree("pwned-passwords-test.txt");
+    // write_tnode(test_node, "dat/r.txt");
+    // free_tnode(test_node);
 
+    tnode *test_node = read_tnode("dat/r.txt");
+
+    kp *test = search_b_tree(test_node, "000A1FDE080DBB584E75A54D031B3F20C912D8EB");
 
     free_tnode(test_node);
+    
+    printf("key with value: %s and occurence: %i\n", test->key, test->occurences);
+    free(test);
 
     return 0;
 }
