@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define word_size 20
 #define key_length 40
@@ -117,10 +118,14 @@ tnode *read_tnode(char *filename) {
 void load_key_into_node(tnode *node, char *line, char *delimiter, int key_pos) {
     /* tokenizing the line into key and occurence pair */
     char *key = strtok(line, delimiter);
-    char *occurence_string = strtok(NULL, delimiter); 
-    int occurence = atoi(occurence_string);
+    if (key == NULL)
+        return;
 
-    printf("key: %s, occurence: %i\n", key, occurence);
+    char *occurence_string = strtok(NULL, delimiter); 
+    if (occurence_string == NULL)
+        return;
+
+    int occurence = atoi(occurence_string);
 
     strcpy(node->keys[key_pos].key, key);
     node->keys[key_pos].occurences = occurence;
@@ -136,12 +141,13 @@ tnode *build_b_tree(char *filename) {
     if (file == NULL)
         exit(EXIT_FAILURE);
 
-    int node_size = 46;
+    int node_size = 775;
 
     /* routine to fill the B-tree, each node being of size node_size */
     tnode *root = allocate_node(node_size, 0);
     for(int i = 0; i < node_size; i++) {
-
+        float p = (float)i/(float)node_size*100;
+        printf("Progress %.3f%%\n", p);
         tnode *c = allocate_node(node_size, 0);
         for(int j = 0; j < node_size; j++) {
 
@@ -252,17 +258,24 @@ int main() {
 
     free_tnode(new_node);
 
-    // tnode *test_node = build_b_tree("pwned-passwords-test.txt");
+    // tnode *test_node = build_b_tree("pwned-passwords-sha1-ordered-by-hash-v7.txt");
     // write_tnode(test_node, "dat/r.txt");
     // free_tnode(test_node);
 
+    double time_spent = 0.0;
+
+    clock_t beg = clock();
+
     tnode *test_node = read_tnode("dat/r.txt");
 
-    kp *test = search_b_tree(test_node, "000A1FDE080DBB584E75A54D031B3F20C912D8EB");
+    kp *test = search_b_tree(test_node, "5BAA61E4C9B93F3F0682250B6CF8331B7EE68FD8");
 
     free_tnode(test_node);
     
-    printf("key with value: %s and occurence: %i\n", test->key, test->occurences);
+    clock_t end = clock();
+    time_spent += (double) (end - beg) / CLOCKS_PER_SEC;
+
+    printf("key with value: %s and occurence: %i found in time %f\n", test->key, test->occurences, time_spent);
     free(test);
 
     return 0;
