@@ -1,12 +1,14 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define word_size 20
+#define key_length 40
 
 typedef struct kp {     /* key pair */
-    unsigned long key;      /* 8 byte unsigned long which will store key value */
-    char password[20];         /* character array used to store the plaintext password */
+    char key[key_length + 1];      /* character array used to store each key of size key_length, add 1 for null termination */
+    int occurences;            /* used to count the number of occurences of a password */
 } kp;
 
 typedef struct tnode {
@@ -17,9 +19,6 @@ typedef struct tnode {
                              /* and loaded into memory and cast to tnode type */
     int leaf;                /* 1 == current node is a leaf node, 0 otherwise*/
 } tnode;
-
-/* we need a data type to store the key and a pointer to the 
-sateilite data (plaintext password) associated with key */
 
 /* instantiates a new node */
 struct tnode *allocate_node(int keys, int leaf) {
@@ -38,7 +37,7 @@ struct tnode *allocate_node(int keys, int leaf) {
     ret->leaf = leaf;
 
     /* check to ensure that malloc was successful*/
-    /* could lead to memory leaks, check each one individually */
+    /* TODO: could lead to memory leaks, check each one individually */
     if (ret->keys == NULL || ret->children == NULL ) {
         free (ret);
         return NULL;
@@ -47,7 +46,7 @@ struct tnode *allocate_node(int keys, int leaf) {
     return ret;
 }
 
-// free a tnode from memory
+/* free a tnode from memory */
 void free_tnode(tnode *node) {
     int n = node->n;
     for(int i = 0; i < n; i++) {
@@ -80,15 +79,12 @@ void write_tnode(tnode *node, char *filename) {
         fclose(file);
     }
 }
-// strcpy(object->day,"Good day");
 
 /* read a node from a file */
 tnode *read_tnode(char *filename) {
     tnode *node = malloc(sizeof(tnode));
     FILE *file = fopen(filename, "rb");
-    printf("here");
     if (file != NULL) {
-        printf("here");
         fread(node, sizeof(tnode), 1, file);
 
 
@@ -112,22 +108,46 @@ tnode *read_tnode(char *filename) {
     return node;
 }
 
+/* takes the input file and parses it into a b_tree, returning the root */
+tnode *build_b_tree(char *filename) {
+    FILE *file = fopen(filename, "r");
+    char *line = NULL;
+    size_t len = 0;
+    ssize_t read;
+
+    if (file == NULL)
+        exit(EXIT_FAILURE);
+
+    
+    while ((read = getline(&line, &len, file)) != -1) {
+        printf("Retrieved line of length %zu:\n", read);
+        printf("%s", line);
+    }
+
+    fclose(file);
+    if (line)
+        free(line);
+
+
+
+    // fill tree
+
+    // first, initialize the root
+
+    // then, initialize the first child of the root
+
+    // then start adding to first child of that child
+
+}
 
 int main() {
     printf("Running!\n");
-    // FILE *file = fopen("test", "wb");
-    // if (file != NULL) {
-    //     fwrite("test0", 5, 1, file);
-    //     fwrite("test1", 5, 1, file);
-    //     fwrite("test2", 5, 1, file);
-    //     fclose(file);
-    // }
 
     // let's create a test tnode with some random fields filled in
-    tnode *node = allocate_node(20, 0);
+    tnode *node = allocate_node(100, 0);
     for(int i = 0; i < node->n; i++) {
-        node->keys[i].key = i;
-        strcpy(node->keys[i].password, "test123456");
+        strcpy(node->keys[i].key, "00000000A8DAE4228F821FB418F59826079BF368");
+        node->keys[i].occurences = node->n-i-1;
     }
 
     for(int i = 0; i < node->n; i++) {
@@ -140,11 +160,12 @@ int main() {
 
     tnode *new_node = read_tnode("test2.txt");
 
-    //printf("node keys %i", new_node->n);
+    printf("node keys: %i\n", new_node->n);
 
-    // printf("contents of first key: %ld, %s, contents of second key: %ld, %s \n", 
-    //     new_node->keys[0].key, new_node->keys[0].password, 
-    //     new_node->keys[1].key, new_node->keys[1].password); 
+    printf("contents of first key: %s, %i, \ncontents of second key: %s, %i, \ncontents of last key: %s, %i \n", 
+        new_node->keys[0].key, new_node->keys[0].occurences, 
+        new_node->keys[2].key, new_node->keys[2].occurences,
+        new_node->keys[new_node->n-1].key, new_node->keys[new_node->n-1].occurences);
 
     free_tnode(new_node);
 
