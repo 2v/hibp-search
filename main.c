@@ -6,6 +6,9 @@
 #define word_size 20
 #define key_length 40
 
+// let infinity string = FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+const char *inf_key = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF";
+
 typedef struct kp {     /* key pair */
     char key[key_length + 1];      /* character array used to store each key of size key_length, add 1 for null termination */
     int occurences;            /* used to count the number of occurences of a password */
@@ -108,6 +111,18 @@ tnode *read_tnode(char *filename) {
     return node;
 }
 
+void load_data_into_node(tnode *node, char *line, char *delimiter, int key_pos) {
+    /* tokenizing the line into key and occurence pair */
+    char *key = strtok(line, delimiter);
+    char *occurence_string = strtok(NULL, delimiter); 
+    int occurence = atoi(occurence_string);
+
+    printf("key: %s, occurence: %i\n", key, occurence);
+
+    strcpy(node->keys[key_pos].key, key);
+    node->keys[key_pos].occurences = occurence;
+}
+
 /* takes the input file and parses it into a b_tree, returning the root */
 tnode *build_b_tree(char *filename) {
     FILE *file = fopen(filename, "r");
@@ -118,26 +133,66 @@ tnode *build_b_tree(char *filename) {
     if (file == NULL)
         exit(EXIT_FAILURE);
 
-    
-    while ((read = getline(&line, &len, file)) != -1) {
-        printf("Retrieved line of length %zu:\n", read);
-        printf("%s", line);
-    }
+    int node_size = 46;
+
+    /* routine to fill the B-tree, each node being of size node_size */
+    tnode *root = allocate_node(node_size, 0);
+    for(int i = 0; i < node_size; i++) {
+
+        tnode *c = allocate_node(node_size, 0);
+        for(int j = 0; j < node_size; j++) {
+
+            tnode *cc = allocate_node(node_size, 1);
+            for(int k = 0; k < node_size; k++) {
+
+                if ((read = getline(&line, &len, file)) != -1) {
+                    load_data_into_node(cc, line, ":", k);
+                } else {
+                    strcpy(cc->keys[k].key, inf_key);
+                    cc->keys[k].occurences = 0;
+                    break;
+                }
+            }
+
+            /* once the node is full, write it to a file with an identifiable name */
+            char *node_filename = malloc(13 * sizeof(char));
+            sprintf(node_filename, "dat/c%ic%i.txt", i, j);
+            write_tnode(cc, node_filename);
+            strcpy(c->children[j], node_filename);
+            free_tnode(cc);
+            free(node_filename);
+
+            if ((read = getline(&line, &len, file)) != -1) {
+                load_data_into_node(c, line, ":", j);
+            } else {
+                strcpy(c->keys[j].key, inf_key);
+                c->keys[j].occurences = 0;
+                break;
+            }
+        }
+
+        /* once the node is full, write it to a file with an identifiable name */
+        char *node_filename = malloc(11 * sizeof(char));
+        sprintf(node_filename, "dat/c%i.txt", i);
+        write_tnode(c, node_filename);
+        strcpy(root->children[i], node_filename);
+        free_tnode(c);
+        free(node_filename);
+
+        if ((read = getline(&line, &len, file)) != -1) {
+            load_data_into_node(root, line, ":", i);
+        } else {
+            strcpy(root->keys[i].key, inf_key);
+            root->keys[i].occurences = 0;
+            break;
+        }
+   }
 
     fclose(file);
     if (line)
         free(line);
 
-
-
-    // fill tree
-
-    // first, initialize the root
-
-    // then, initialize the first child of the root
-
-    // then start adding to first child of that child
-
+    return root;
 }
 
 int main() {
@@ -168,6 +223,11 @@ int main() {
         new_node->keys[new_node->n-1].key, new_node->keys[new_node->n-1].occurences);
 
     free_tnode(new_node);
+
+    tnode *test_node = build_b_tree("pwned-passwords-test.txt");
+
+
+    free_tnode(test_node);
 
     return 0;
 }
