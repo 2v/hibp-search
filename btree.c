@@ -16,20 +16,22 @@ tnode *allocate_node(int keys, int leaf) {
 
     ret->n = keys;
     ret->keys = malloc (keys * sizeof(kp));
+    if (ret->keys == NULL) {
+        free (ret);
+        return NULL;
+    }
     ret->children = malloc (keys * sizeof(char *));
+    if (ret->children == NULL) {
+        free(ret->keys);
+        free (ret);
+        return NULL;
+    }
+ 
     for(int i = 0; i < keys; i++) {
-        /* call malloc once for ever key to create space for a path to a child node */
         ret->children[i] = malloc (word_size * sizeof(char));
     }
     
     ret->leaf = leaf;
-
-    /* check to ensure that malloc was successful*/
-    /* TODO: could lead to memory leaks, check each one individually */
-    if (ret->keys == NULL || ret->children == NULL ) {
-        free (ret);
-        return NULL;
-    }
 
     return ret;
 }
@@ -37,12 +39,14 @@ tnode *allocate_node(int keys, int leaf) {
 /* free a tnode from memory */
 void free_tnode(tnode *node) {
     int n = node->n;
+
+    /* free all data allocated to child array elements */
     for(int i = 0; i < n; i++) {
-        /* free all data allocated to array elements */
         free(node->children[i]);
     }
+
     free(node->keys);
-    free(node->children); // error here after reading the node from file
+    free(node->children);
     free(node);
 }
 
@@ -50,16 +54,16 @@ void free_tnode(tnode *node) {
 void write_tnode(tnode *node, char *filename) {
     FILE *file = fopen(filename, "wb");
     if (file != NULL) {
-        // write the struct itself to the file
+        /* write the struct itself to the file */
         fwrite(node, sizeof(tnode), 1, file);
 
-        // write all of the keypairs to the file
+        /* write all of the keypairs to the file */
         fwrite(node->keys, node->n * sizeof(kp), 1, file);
         
-        // write the children data to the file
+        /* write the children data to the file */
         fwrite(node->children, node->n * sizeof(char *), 1, file);
 
-        // write each string stored in children to the file
+        /* write each string stored in children to the file */
         for(int i = 0; i < node->n; i++) {
             fwrite(node->children[i], word_size * sizeof(char), 1, file);
         }
@@ -75,16 +79,15 @@ tnode *read_tnode(char *filename) {
     if (file != NULL) {
         fread(node, sizeof(tnode), 1, file);
 
-
-        // read all of the keypairs to the node
+        /* read all of the keypairs to the node */
         node->keys = malloc(node->n * sizeof(kp));
         fread(node->keys, node->n * sizeof(kp), 1, file);
         
-        // read the children data to the node
+        /* read the children data to the node */
         node->children = malloc(node->n * sizeof(char *));
         fread(node->children, node->n * sizeof(char *), 1, file);
 
-        // write each string stored in children to the file
+        /* write each string stored in children to the file */
         for(int i = 0; i < node->n; i++) {
             node->children[i] = malloc(word_size * sizeof(char));
             fread(node->children[i], word_size * sizeof(char), 1, file);
@@ -99,7 +102,6 @@ tnode *read_tnode(char *filename) {
     uses strtok to break up the given line into two tokens
     seperated by the given delimiter */
 void load_key_into_node(tnode *node, char *line, char *delimiter, int key_pos) {
-    /* tokenizing the line into key and occurence pair */
     char *key = strtok(line, delimiter);
     if (key == NULL)
         return;
@@ -185,8 +187,8 @@ tnode *build_b_tree(char *filename) {
     return root;
 }
 
+/* search the b-tree starting from root node x and find key pair from key */
 kp *search_b_tree(tnode *x, char key[41]) {
-    /* set up empty kp */
     kp *ret = malloc(sizeof(kp));
 
     int i = 0;

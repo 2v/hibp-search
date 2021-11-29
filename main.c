@@ -46,7 +46,7 @@ int main() {
 
     tnode *test_node = read_tnode("dat/r.txt");
 
-    kp *test = search_b_tree(test_node, "E8C76907C6F240F1A5AEB2C07EFD988839FB2C12");
+    kp *test = search_b_tree(test_node, "E83249BD3BA79932E16FB1FB5100DAFADE9954C2");
 
     free_tnode(test_node);
     
