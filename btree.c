@@ -43,7 +43,8 @@ void free_tnode(tnode *node) {
 
     /* free all data allocated to child array elements */
     for(int i = 0; i < n; i++) {
-        free(node->children[i]);
+        char *child = node->children[i];
+        free(child);
     }
 
     free(node->keys);
@@ -189,28 +190,57 @@ tnode *build_b_tree(char *filename) {
 }
 
 /* search the b-tree starting from root node x and find key pair from key */
-kp *search_b_tree(tnode *x, char key[41]) {
+kp *search_b_tree(tnode *root, char key[41]) {
     kp *ret = malloc(sizeof(kp));
 
     int i = 0;
-    while(i < x->n && strcmp(key, x->keys[i].key) > 0 
-            && strcmp(x->keys[i].key, inf_key) != 0) {
+    while(i < root->n && strcmp(key, root->keys[i].key) > 0 
+            && strcmp(root->keys[i].key, inf_key) != 0) {
         i = i + 1;
     }
 
-    if(i < x->n && strcmp(key, x->keys[i].key) == 0) {
-        strcpy(ret->key, x->keys[i].key);
-        ret->occurences = x->keys[i].occurences;
+    if(i < root->n && strcmp(key, root->keys[i].key) == 0) {
+        strcpy(ret->key, root->keys[i].key);
+        ret->occurences = root->keys[i].occurences;
         return ret;
-   } else if(x->leaf) {
+   } else if(root->leaf) {
         strcpy(ret->key, "NOT FOUND");
         ret->occurences = -1;
         return ret;
     } else {
-        tnode *child = read_tnode(x->children[i]);
-        free(x);
         free(ret);
-        search_b_tree(child, key);
+        tnode *child = read_tnode(root->children[i]);
+        search_b_tree_helper(child, key);
+    }
+}
+
+
+/* only difference between search_b_tree is that child argument is always freed before recursive step*/
+kp *search_b_tree_helper(tnode *child, char key[41]) {
+    kp *ret = malloc(sizeof(kp));
+
+    int i = 0;
+    while(i < child->n && strcmp(key, child->keys[i].key) > 0 
+            && strcmp(child->keys[i].key, inf_key) != 0) {
+        i = i + 1;
+    }
+
+    if(i < child->n && strcmp(key, child->keys[i].key) == 0) {
+        strcpy(ret->key, child->keys[i].key);
+        ret->occurences = child->keys[i].occurences;
+        free_tnode(child);
+        return ret;
+   } else if(child->leaf) {
+        strcpy(ret->key, "NOT FOUND");
+        ret->occurences = -1;
+        free_tnode(child);
+        return ret;
+    } else {
+        tnode *c = read_tnode(child->children[i]);
+        /* free the child node passed as argument since it will no longer be used */
+        free_tnode(child);
+        free(ret);
+        search_b_tree_helper(c, key);
     }
 }
 
