@@ -3,8 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <openssl/sha.h>
 #include "btree.h"
+#include <sys/types.h>
+#include "sha1.h"
 
 const char *inf_key = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF";
 

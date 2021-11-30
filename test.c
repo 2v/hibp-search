@@ -3,8 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <openssl/sha.h>
 #include "btree.h"
+#include <sys/types.h>
+#include "sha1.h"
+
 
 int main() {
     printf("Running!\n");
@@ -20,7 +22,6 @@ int main() {
         strcpy(node->children[i], "test_1");
     }
 
-
     write_tnode(node, "test2.txt");
     free_tnode(node);
 
@@ -34,27 +35,6 @@ int main() {
         new_node->keys[new_node->n-1].key, new_node->keys[new_node->n-1].occurences);
 
     free_tnode(new_node);
-
-    // tnode *test_node = build_b_tree("pwned-passwords-sha1-ordered-by-hash-v7.txt");
-    // write_tnode(test_node, "dat/r.txt");
-    // free_tnode(test_node);
-
-    /* check time taken to search for a hashed password */
-    double time_spent = 0.0;
-
-    clock_t beg = clock();
-
-    tnode *test_node = read_tnode("dat/r.txt");
-
-    kp *test = search_b_tree(test_node, "E83249BD3BA79932E16FB1FB5100DAFADE9954C2");
-
-    free_tnode(test_node);
-    
-    clock_t end = clock();
-    time_spent += (double) (end - beg) / CLOCKS_PER_SEC;
-
-    printf("key with value: %s and occurence: %i found in time %f\n", test->key, test->occurences, time_spent);
-    free(test);
 
     return 0;
 }
