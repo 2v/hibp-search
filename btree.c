@@ -118,8 +118,9 @@ void load_key_into_node(tnode *node, char *line, char *delimiter, int key_pos) {
     node->keys[key_pos].occurences = occurence;
 }
 
-/* takes the input file and parses it into a b_tree, returning the root */
-tnode *build_b_tree(char *filename) {
+/* takes the input file and parses it into a b_tree, returning the root node.
+    writes the data to the dat folder */
+tnode *build_b_tree(char *filename, char *output_dir) {
     FILE *file = fopen(filename, "r");
     char *line = NULL;
     size_t len = 0;
@@ -131,8 +132,10 @@ tnode *build_b_tree(char *filename) {
     /* routine to fill the B-tree, each node being of size node_size */
     tnode *root = allocate_node(node_size, 0);
     for(int i = 0; i < node_size; i++) {
+        /* keep track of current progress and output */
         float p = (float)i/(float)node_size*100;
-        printf("Progress %.3f%%\n", p);
+        printf("Progress %.3f%%       \n", p);
+
         tnode *c = allocate_node(node_size, 0);
         for(int j = 0; j < node_size; j++) {
 
@@ -148,9 +151,8 @@ tnode *build_b_tree(char *filename) {
                 }
             }
 
-            /* once the node is full, write it to a file with an identifiable name */
-            char *node_filename = malloc(13 * sizeof(char));
-            sprintf(node_filename, "dat/c%ic%i.txt", i, j);
+            char *node_filename = malloc(word_size * sizeof(char));
+            sprintf(node_filename, "%s/c%ic%i.bin", output_dir, i, j);
             write_tnode(cc, node_filename);
             strcpy(c->children[j], node_filename);
             free_tnode(cc);
@@ -165,9 +167,8 @@ tnode *build_b_tree(char *filename) {
             }
         }
 
-        /* once the node is full, write it to a file with an identifiable name */
-        char *node_filename = malloc(11 * sizeof(char));
-        sprintf(node_filename, "dat/c%i.txt", i);
+        char *node_filename = malloc(word_size * sizeof(char));
+        sprintf(node_filename, "%s/c%i.dat", output_dir, i);
         write_tnode(c, node_filename);
         strcpy(root->children[i], node_filename);
         free_tnode(c);
@@ -180,7 +181,7 @@ tnode *build_b_tree(char *filename) {
             root->keys[i].occurences = 0;
             break;
         }
-   }
+    }
 
     fclose(file);
     if (line)

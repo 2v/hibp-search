@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
     /* check time taken to search for a hashed password */
     double t = 0.0;
     clock_t beg = clock();
-    tnode *root = read_tnode("dat/r.txt");
+    tnode *root = read_tnode("dat/r.bin");
     kp *result = search_b_tree(root, buffer); 
     free_tnode(root);
     clock_t end = clock();

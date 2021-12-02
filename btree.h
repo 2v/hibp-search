@@ -21,6 +21,6 @@ void free_tnode(tnode *node);
 void write_tnode(tnode *node, char *filename);
 tnode *read_tnode(char *filename);
 void load_key_into_node(tnode *node, char *line, char *delimiter, int key_pos);
-tnode *build_b_tree(char *filename);
+tnode *build_b_tree(char *filename, char *output_dir);
 kp *search_b_tree(tnode *x, char key[41]);
 kp *search_b_tree_helper(tnode *child, char key[41]);
