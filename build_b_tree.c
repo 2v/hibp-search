@@ -25,5 +25,7 @@ int main(int argc, char* argv[]) {
     clock_t end = clock();
     t += (double) (end - beg) / CLOCKS_PER_SEC;
 
+    printf("B-tree generated in time %f\n", t);
+
     return 0;
 }

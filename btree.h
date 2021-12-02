@@ -2,18 +2,19 @@
 #define key_length 40
 #define node_size 850
 
-typedef struct kp {     /* key pair */
-    char key[key_length + 1];      /* character array used to store each key of size key_length, add 1 for null termination */
-    int occurences;            /* used to count the number of occurences of a password */
+typedef struct kp {            /* key pair */
+    char key[key_length + 1];  /* character array used to store each SHA-1 key */
+    int occurences;            /* used to count the number of occurrences of a password */
 } kp;
 
-typedef struct tnode {  /* b-tree node */
-    int n;                   /* the number of keys currently stored in this node */
-    kp *keys;         /* pointer to data containing the keys, should be initialized with malloc */
-    char **children;         /* pointer to data containing pointers to children */
-                             /* these will be paths to files containing particular nodes, which will have to be opened */
-                             /* and loaded into memory and cast to tnode type */
-    int leaf;                /* 1 == current node is a leaf node, 0 otherwise*/
+typedef struct tnode {   /* b-tree node */
+    int n;               /* the number of keys currently stored in this node */
+    kp *keys;            /* pointer to data containing the keys, should be initialized with malloc */
+    char **children;     /* pointer to data containing pointers to children
+                            these will be paths to files containing particular
+                            nodes, which will have to be opened
+                            and loaded into memory */
+    int leaf;            /* 1 == current node is a leaf node, 0 otherwise*/
 } tnode;
 
 tnode *allocate_node(int keys, int leaf);

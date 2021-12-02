@@ -204,7 +204,7 @@ kp *search_b_tree(tnode *root, char key[41]) {
         strcpy(ret->key, root->keys[i].key);
         ret->occurences = root->keys[i].occurences;
         return ret;
-   } else if(root->leaf) {
+    } else if(root->leaf) {
         strcpy(ret->key, "NOT FOUND");
         ret->occurences = -1;
         return ret;
